@@ -1,38 +1,24 @@
 pipeline {
     agent any
+
     stages {
+
         stage('Verify Shell Environment') {
             steps {
                 script {
-                    // Get the job name and build number
                     def jobName = env.JOB_NAME
                     def buildNumber = env.BUILD_NUMBER
 
-                    // Print the job name and build number
                     echo "Job Name: $jobName"
                     echo "Build Number: $buildNumber"
 
-                    // Use them in shell commands
                     sh 'sudo docker --version'
                     sh 'sudo dotnet --info'
                 }
             }
         }
 
-        stage('Checkout Jenkins Upgrade3 Git Repository') {
-            steps {
-                script {
-                    // Clone the Git repository's master branch
-                    def gitRepoUrl = 'https://github.com/waghmareswapnil21/Jenkins_Upgradev3.git'
-
-                    checkout([$class: 'GitSCM', 
-                        branches: [[name: '*/master']], 
-                        userRemoteConfigs: [[url: gitRepoUrl]], 
-                        extensions: [[$class: 'CleanBeforeCheckout'], [$class: 'CloneOption', noTags: false, shallow: true, depth: 1]]
-                    ])
-                }
-            }
-        }
+        // ❌ REMOVED WRONG CHECKOUT STAGE
 
         stage('Build Application') {
             steps {
@@ -43,28 +29,32 @@ pipeline {
         stage('Unit Test') {
             steps {
                 sh 'chmod +x ./jenkins-plugin-model/ci/03-unit-test.sh && ./jenkins-plugin-model/ci/03-unit-test.sh'
-                mstest testResultsFile:"**/*.trx"
+                mstest testResultsFile: "**/*.trx"
             }
         }
 
         stage('Push Docker Image') {
             steps {
                 script {
-                    // Get the job name and build number
                     def jobName = env.JOB_NAME
                     def buildNumber = env.BUILD_NUMBER
 
-                    // Print the job name and build number
                     echo "Job Name: $jobName"
                     echo "Build Number: $buildNumber"
-                
-                withCredentials([usernamePassword(credentialsId: '90609bdd-3bf8-457b-a58b-aa910b77c963', usernameVariable: 'DOCKER_HUB_USER', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {                      
-                    sh "chmod +x ./jenkins-plugin-model/ci/04-push.sh"
-                    sh "./jenkins-plugin-model/ci/04-push.sh $buildNumber"
+
+                    withCredentials([usernamePassword(
+                        credentialsId: 'da30b7d1-e9af-4b31-97f4-e8c6e65ac764',
+                        usernameVariable: 'DOCKER_HUB_USER',
+                        passwordVariable: 'DOCKER_HUB_PASSWORD'
+                    )]) {
+
+                        sh "chmod +x ./jenkins-plugin-model/ci/04-push.sh"
+                        sh "./jenkins-plugin-model/ci/04-push.sh $buildNumber"
+                    }
+
+                    echo "Build Completed - Job Name: $jobName -- Build Number: $buildNumber"
                 }
-                echo "Build Completed - Job Name: $jobName  --  Build Number: $buildNumber"
             }
         }
     }
-}
 }
