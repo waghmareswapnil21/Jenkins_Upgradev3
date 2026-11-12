@@ -5,7 +5,7 @@ pipeline {
         // Define environment variables here
         MY_ENV_VAR = 'Production'
     }
-
+ 
     stages {
         stage('Checkout') {
             steps {
